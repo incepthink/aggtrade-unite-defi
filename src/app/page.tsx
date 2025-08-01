@@ -1,103 +1,140 @@
-import Image from "next/image";
+import GlowBox from "@/components/ui/GlowBox";
+import ChartSpot, { ChartHeader } from "@/components/chart/ChartSpot";
+import SwapComponent from "@/components/swap/SwapComponent";
+// import TokenBalancesCard from "@/components/spot/TokenBalancesCard";
+import TokenSelect from "@/components/ui/TokenSelect";
+import { TokenSelectModal } from "@/components/ui/TokenSelectModal";
+import { Box, Container, Stack } from "@mui/material";
+import React from "react";
 
-export default function Home() {
+const page = () => {
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <Container
+      maxWidth="xl"
+      sx={{
+        px: { xs: 1, sm: 2, md: 3 }, // Responsive padding
+        py: { xs: 1, sm: 2 }, // Responsive vertical padding
+        maxWidth: { xs: "100%", lg: "1400px", xl: "1600px" }, // Limit max width on large screens
+      }}
+    >
+      <TokenSelectModal />
+      <Stack spacing={{ xs: 2, sm: 2 }}>
+        {" "}
+        {/* Responsive spacing */}
+        <Box>
+          <TokenSelect />
+        </Box>
+        {/* Main Content Area - Responsive Layout */}
+        <Stack
+          direction={{ xs: "column", lg: "row" }} // Stack vertically on mobile, horizontally on large screens
+          spacing={{ xs: 1, sm: 2 }}
+          alignItems="stretch"
+        >
+          {/* Chart Section */}
+          <Box
+            sx={{
+              flex: { lg: 2 },
+              order: { xs: 2, lg: 1 }, // Chart comes second on mobile, first on desktop
+              display: "flex",
+              flexDirection: "column",
+              gap: { xs: 1, sm: 2 },
+            }}
+          >
+            {/* Chart Header - Only show outside on mobile/tablet */}
+            <Box
+              sx={{
+                display: { md: "block", lg: "none" },
+                mb: { xs: 0, md: 1, lg: 0 },
+              }}
+            >
+              <Box sx={{ display: { xs: "block", md: "none" }, mt: 2, mb: 1 }}>
+                <GlowBox
+                  sx={{
+                    p: 0, // Remove default padding
+                    overflow: "hidden",
+                  }}
+                >
+                  <ChartHeader />
+                </GlowBox>
+              </Box>
+            </Box>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            {/* Chart Container */}
+            <Box
+              sx={{
+                maxHeight: {
+                  xs: "400px",
+                  sm: "500px",
+                  md: "600px",
+                  lg: "600px",
+                  xl: "700px",
+                },
+                height: {
+                  xs: "350px",
+                  sm: "450px",
+                  md: "550px",
+                  lg: "550px",
+                  xl: "560px",
+                },
+                overflow: "hidden",
+              }}
+            >
+              <GlowBox
+                sx={{
+                  height: "100%",
+                  maxHeight: "100%",
+                  position: "relative",
+                  backgroundImage:
+                    "radial-gradient(circle, rgba(255,255,255,0.2) 1px, transparent 1px)",
+                  backgroundSize: { xs: "20px 20px", sm: "30px 30px" },
+                  overflow: "hidden",
+                  p: { xs: 0, md: 2 }, // No padding on mobile, normal padding on medium screens and up
+                }}
+              >
+                <ChartSpot />
+              </GlowBox>
+            </Box>
+          </Box>
+
+          {/* Swap Section */}
+          <Box
+            sx={{
+              flex: { lg: 1 },
+              order: { xs: 1, lg: 2 }, // Swap comes first on mobile, second on desktop
+              minWidth: { xs: "auto", lg: "550px" }, // Responsive height
+              maxWidth: { lg: "400px", xl: "450px" }, // Limit max width of swap panel
+              overflow: "hidden", // Prevent content from spilling out
+            }}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            <GlowBox
+              sx={{
+                height: "100%",
+                maxHeight: "100%", // Ensure GlowBox respects parent height
+                minHeight: { xs: "400px", sm: "450px" }, // Ensure adequate height on mobile
+                overflow: "hidden", // Prevent overflow
+              }}
+            >
+              <SwapComponent />
+            </GlowBox>
+          </Box>
+        </Stack>
+        {/* Token Balances Section */}
+        {/* <Box>
+          <GlowBox
+            sx={{
+              minHeight: { xs: "200px", sm: "250px" }, // Responsive minimum height
+              "& .MuiBox-root": {
+                // Style nested boxes if needed
+                overflow: "auto", // Handle overflow on small screens
+              },
+            }}
           >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+            <TokenBalancesCard />
+          </GlowBox>
+        </Box> */}
+      </Stack>
+    </Container>
   );
-}
+};
+
+export default page;
