@@ -1,6 +1,6 @@
 import GlowBox from "@/components/ui/GlowBox";
 import ChartSpot, { ChartHeader } from "@/components/chart/ChartSpot";
-import SwapComponent from "@/components/swap/SwapComponent";
+import SwapContainer from "@/components/swap/SwapContainer";
 // import TokenBalancesCard from "@/components/spot/TokenBalancesCard";
 import TokenSelect from "@/components/ui/TokenSelect";
 import { TokenSelectModal } from "@/components/ui/TokenSelectModal";
@@ -114,7 +114,7 @@ const page = () => {
                 overflow: "hidden", // Prevent overflow
               }}
             >
-              <SwapComponent />
+              <SwapContainer />
             </GlowBox>
           </Box>
         </Stack>

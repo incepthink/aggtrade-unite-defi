@@ -381,3 +381,5 @@ const ChartSpot = () => {
 };
 
 export default ChartSpot;
+
+// TODO :: use 1inch api to get chart data
