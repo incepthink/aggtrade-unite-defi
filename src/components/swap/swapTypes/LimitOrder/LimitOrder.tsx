@@ -3,7 +3,8 @@
 
 import { DownOutlined, InfoCircleOutlined } from "@ant-design/icons";
 import SwapVertIcon from "@mui/icons-material/SwapVert";
-import { Input, Select, message, Badge, Button } from "antd";
+import { Input, Select, message, Badge } from "antd";
+import { Button } from "@mui/material";
 import React, { useState, useEffect, useCallback } from "react";
 import {
   useAccount,
@@ -392,9 +393,9 @@ function LimitOrder() {
       // Create order entry for localStorage (always do this as backup)
       const localOrder = {
         id: `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        orderHash: `0x${Date.now().toString(16)}${Math.random()
+        orderHash: `0x${Math.random().toString(16).slice(2)}${Math.random()
           .toString(16)
-          .substr(2, 8)}`,
+          .slice(2)}`,
         signature,
         data: orderData,
         // Display data
@@ -472,9 +473,7 @@ function LimitOrder() {
           "Limit order created and submitted to 1inch successfully!"
         );
       } else {
-        msgApi.success(
-          "Limit order created successfully! Order is being tracked locally."
-        );
+        msgApi.success("Limit order created successfully!");
       }
 
       // Reset form
@@ -689,11 +688,11 @@ function LimitOrder() {
               value={limitRate}
               onChange={changeLimitRate}
               disabled={isCreatingOrder}
-              className="pr-28"
             />
             <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
               <Button
-                size="small"
+                variant="outlined"
+                sx={{ fontSize: 10 }}
                 onClick={setToMarketPrice}
                 className="text-xs border-gray-600 text-gray-400 hover:text-white"
                 disabled={!currentMarketPrice || isLoadingPrice}

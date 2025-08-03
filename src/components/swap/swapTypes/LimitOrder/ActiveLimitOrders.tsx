@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Button, Empty, message } from "antd";
-import { ReloadOutlined } from "@ant-design/icons";
+import { Empty, message } from "antd";
+import RefreshIcon from "@mui/icons-material/Refresh";
 import {
   Dialog,
   DialogTitle,
@@ -15,6 +15,7 @@ import {
   Tab,
   Box,
   Badge,
+  CircularProgress,
 } from "@mui/material";
 import { Delete as DeleteIcon } from "@mui/icons-material";
 import { useAccount, useChainId } from "wagmi";
@@ -388,15 +389,29 @@ const ActiveLimitOrders: React.FC = () => {
         {/* Header */}
         <div className="flex justify-between items-center mb-6 p-4 pb-0">
           <h3 className="text-xl font-semibold text-white">Limit Orders</h3>
-          <Button
-            icon={<ReloadOutlined />}
+          <MuiButton
+            variant="outlined"
             size="small"
             onClick={fetchOrders}
-            loading={loading}
-            className="bg-gray-800 border-gray-600 text-gray-400 hover:text-white hover:border-gray-500"
+            disabled={loading}
+            startIcon={
+              loading ? (
+                <CircularProgress size={16} color="inherit" />
+              ) : (
+                <RefreshIcon />
+              )
+            }
+            sx={{
+              "&.Mui-disabled": {
+                backgroundColor: "#1f2937",
+                borderColor: "#00F5E0",
+                color: "#00F5E0",
+                opacity: 0.7,
+              },
+            }}
           >
             Refresh
-          </Button>
+          </MuiButton>
         </div>
 
         {/* MUI Tabs */}

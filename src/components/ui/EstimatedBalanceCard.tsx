@@ -159,14 +159,14 @@ export default function EstimatedBalanceCard({
               USD
             </p>
 
-            {(spotData || hasActiveLimitOrders) && (
+            {/* {(spotData || hasActiveLimitOrders) && (
               <button
                 onClick={() => setShowDetails(!showDetails)}
                 className="text-xs text-cyan-400 hover:text-cyan-300 underline transition-colors"
               >
                 {showDetails ? "Hide" : "Show"} Details
               </button>
-            )}
+            )} */}
           </div>
 
           {/* Detailed Breakdown */}

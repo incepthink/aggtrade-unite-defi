@@ -1,5 +1,4 @@
 "use client";
-
 import { createTheme, ThemeProvider } from "@mui/material";
 import React from "react";
 
@@ -28,6 +27,18 @@ const MuiThemeProvider = ({ children }: any) => {
           root: {
             "&.MuiContainer-maxWidthXl": {
               maxWidth: "1800px",
+            },
+          },
+        },
+      },
+      MuiButton: {
+        styleOverrides: {
+          outlined: {
+            borderColor: "#00F5E0",
+            color: "#00F5E0",
+            "&:hover": {
+              borderColor: "#00F5E0",
+              backgroundColor: "rgba(0, 245, 224, 0.1)",
             },
           },
         },
