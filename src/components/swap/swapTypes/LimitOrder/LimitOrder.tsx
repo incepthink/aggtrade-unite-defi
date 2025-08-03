@@ -403,12 +403,14 @@ function LimitOrder() {
           ticker: tokenOne.ticker,
           img: tokenOne.img,
           decimals: tokenOne.decimals,
+          name: tokenOne.name || tokenOne.ticker,
         },
         tokenOut: {
           address: tokenTwo.address,
           ticker: tokenTwo.ticker,
           img: tokenTwo.img,
           decimals: tokenTwo.decimals,
+          name: tokenTwo.name || tokenTwo.ticker,
         },
         amountIn: tokenOneAmount,
         amountOut: tokenTwoAmount,
@@ -423,6 +425,36 @@ function LimitOrder() {
         expiryDays,
         makingAmountWei: makingAmount,
         takingAmountWei: takingAmount,
+        // Order type determination based on ETH/USDC logic
+        orderType:
+          tokenOne.ticker.toUpperCase() === "ETH" ||
+          tokenOne.ticker.toUpperCase() === "WETH"
+            ? "SELL"
+            : "BUY",
+        // Price information
+        priceUSD:
+          tokenOne.ticker.toUpperCase() === "ETH" ||
+          tokenOne.ticker.toUpperCase() === "WETH"
+            ? limitRate // ETH price in USDC
+            : (1 / parseFloat(limitRate)).toFixed(6), // USDC to ETH rate converted to ETH price
+        // Trade direction
+        sellToken: tokenOne.ticker.toUpperCase(),
+        buyToken: tokenTwo.ticker.toUpperCase(),
+        // Network info
+        network: "Ethereum",
+        blockNumber: null, // Will be filled when order is executed
+        transactionHash: null, // Will be filled when order is executed
+        // Order metadata for analytics
+        createdTimestamp: Date.now(),
+        userAgent: navigator.userAgent,
+        // Execution info (for future updates)
+        executedAt: null,
+        executedPrice: null,
+        executedAmount: null,
+        gasUsed: null,
+        // Order book info
+        isPrivate: true, // Since we're using local storage due to API limitation
+        orderBookSource: "local",
       };
 
       // Store in localStorage

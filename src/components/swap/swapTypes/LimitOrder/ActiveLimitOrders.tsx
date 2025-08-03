@@ -25,8 +25,20 @@ interface LimitOrderData {
   };
   // Additional fields for display
   id?: string;
-  tokenIn?: any;
-  tokenOut?: any;
+  tokenIn?: {
+    address: string;
+    ticker: string;
+    img: string;
+    decimals: number;
+    name?: string;
+  };
+  tokenOut?: {
+    address: string;
+    ticker: string;
+    img: string;
+    decimals: number;
+    name?: string;
+  };
   amountIn?: string;
   amountOut?: string;
   rate?: string;
@@ -37,6 +49,25 @@ interface LimitOrderData {
   source?: "local" | "api";
   chainId?: number;
   maker?: string;
+  // ETH/USDC specific fields
+  orderType?: "BUY" | "SELL";
+  priceUSD?: string;
+  sellToken?: string;
+  buyToken?: string;
+  network?: string;
+  blockNumber?: number | null;
+  transactionHash?: string | null;
+  createdTimestamp?: number;
+  userAgent?: string;
+  executedAt?: string | null;
+  executedPrice?: string | null;
+  executedAmount?: string | null;
+  gasUsed?: string | null;
+  isPrivate?: boolean;
+  orderBookSource?: string;
+  expiryDays?: number;
+  makingAmountWei?: string;
+  takingAmountWei?: string;
 }
 
 const ActiveLimitOrders: React.FC = () => {
@@ -226,16 +257,44 @@ const ActiveLimitOrders: React.FC = () => {
     );
   };
 
-  // Get order type and price info
+  // Get order type and price info for ETH/USDC pairs
   const getOrderDisplayInfo = (order: LimitOrderData) => {
-    const rate = parseFloat(order.rate || "0");
+    // Use the stored orderType if available, otherwise determine from tokens
+    let orderType = order.orderType;
+
+    if (!orderType) {
+      // Fallback logic for older orders or API orders
+      const sellToken =
+        order.tokenIn?.ticker?.toUpperCase() ||
+        order.sellToken?.toUpperCase() ||
+        "";
+      const buyToken =
+        order.tokenOut?.ticker?.toUpperCase() ||
+        order.buyToken?.toUpperCase() ||
+        "";
+
+      if (sellToken === "ETH" || sellToken === "WETH") {
+        orderType = "SELL"; // Selling ETH for USDC
+      } else if (buyToken === "ETH" || buyToken === "WETH") {
+        orderType = "BUY"; // Buying ETH with USDC
+      }
+    }
+
     const isLocal = order.source === "local";
 
     return {
-      type: rate > 1000 ? "BUY" : "SELL", // Simple logic, can be enhanced
-      typeColor: rate > 1000 ? "text-green-400" : "text-red-400",
+      type: orderType,
+      typeColor:
+        orderType === "BUY"
+          ? "text-green-400"
+          : orderType === "SELL"
+          ? "text-red-400"
+          : "text-blue-400",
       source: isLocal ? "📱 Local" : "🌐 API",
       sourceColor: isLocal ? "text-yellow-400" : "text-blue-400",
+      priceUSD: order.priceUSD
+        ? `${parseFloat(order.priceUSD).toLocaleString()}`
+        : null,
     };
   };
 
@@ -389,13 +448,18 @@ const ActiveLimitOrders: React.FC = () => {
                       >
                         {getOrderDisplayInfo(order).type}
                       </span>
-                      <span
+                      {getOrderDisplayInfo(order).priceUSD && (
+                        <span className="text-xs text-gray-300">
+                          {getOrderDisplayInfo(order).priceUSD}
+                        </span>
+                      )}
+                      {/* <span
                         className={`text-xs ${
                           getOrderDisplayInfo(order).sourceColor
                         }`}
                       >
                         {getOrderDisplayInfo(order).source}
-                      </span>
+                      </span> */}
                     </div>
 
                     <div className="flex items-center gap-2">

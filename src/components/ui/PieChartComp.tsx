@@ -83,20 +83,33 @@ export function PieChartComp({
         },
       ];
     }
-    let pieData: PieDataItem[] = [];
+    console.log("SPOTDATAPIE::", spotData);
 
     // Add tokens
+    const colorList = generateColors(spotData.tokens.length + 1);
+    const symbolMap = new Map<string, PieDataItem>();
+
     spotData.tokens.forEach((token, index) => {
       if (token.usdValue > 0.01) {
-        pieData.push({
-          name: token.symbol,
-          value: token.usdValue,
-          color: generateColors(spotData.tokens.length + 1)[index + 1],
-          balance: token.balance,
-          symbol: token.symbol,
-        });
+        if (symbolMap.has(token.symbol)) {
+          // Add to existing
+          const existing = symbolMap.get(token.symbol)!;
+          existing.balance += token.balance;
+          existing.value += token.usdValue;
+        } else {
+          // Add new
+          symbolMap.set(token.symbol, {
+            name: token.symbol,
+            value: token.usdValue,
+            color: colorList[index + 1],
+            balance: token.balance,
+            symbol: token.symbol,
+          });
+        }
       }
     });
+
+    const pieData: PieDataItem[] = Array.from(symbolMap.values());
 
     return pieData.length > 0
       ? pieData
