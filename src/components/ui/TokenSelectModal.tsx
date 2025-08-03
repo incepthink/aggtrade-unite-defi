@@ -1,6 +1,26 @@
 // components/swap/TokenSelectModal.tsx
 "use client";
-import { Modal, Select } from "antd";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  IconButton,
+  TextField,
+  InputAdornment,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Tabs,
+  Tab,
+  Box,
+  Typography,
+  Avatar,
+  Chip,
+  Alert,
+  CircularProgress,
+} from "@mui/material";
+import { Close as CloseIcon, Search as SearchIcon } from "@mui/icons-material";
 import { useState, useEffect } from "react";
 import {
   useTokens,
@@ -10,8 +30,7 @@ import {
 } from "@/hooks/useTokens";
 import { useSpotStore, CrossChainToken } from "@/store/spotStore";
 import { TOKENS } from "@/utils/TokenList";
-
-const { Option } = Select;
+import GlowBox from "./GlowBox";
 
 export const TokenSelectModal = () => {
   const tokenOne = useSpotStore((s) => s.tokenOne);
@@ -98,8 +117,15 @@ export const TokenSelectModal = () => {
     setSearchQuery(""); // Reset search on close
   };
 
-  const handleChainChange = (chainId: number) => {
-    setSelectedChainId(chainId);
+  const handleChainChange = (event: any) => {
+    setSelectedChainId(event.target.value);
+  };
+
+  const handleTabChange = (
+    event: React.SyntheticEvent,
+    newValue: "popular" | "all"
+  ) => {
+    setActiveTab(newValue);
   };
 
   // Get the modal title
@@ -116,198 +142,441 @@ export const TokenSelectModal = () => {
   };
 
   return (
-    <Modal
+    <Dialog
       open={modalOpen}
-      footer={null}
-      onCancel={handleModalClose}
-      title={getModalTitle()}
-      width={420}
+      onClose={handleModalClose}
+      maxWidth="sm"
+      fullWidth
+      PaperProps={{
+        sx: {
+          backgroundColor: "transparent",
+          borderRadius: "16px",
+          border: "1px solid #333",
+          color: "white",
+          minHeight: "600px",
+          maxHeight: "80vh",
+        },
+      }}
     >
-      <div className="space-y-4">
-        {/* Chain Selector for Cross-Chain Mode */}
-        {isCrossChainMode && (
-          <div className="px-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Select Network
-            </label>
-            <Select
-              value={selectedChainId}
-              onChange={handleChainChange}
-              className="w-full"
-              placeholder="Choose a network"
-            >
-              {Object.entries(SUPPORTED_CHAINS).map(([chainId, chain]) => (
-                <Option key={chainId} value={Number(chainId)}>
-                  <div className="flex items-center gap-2">
-                    <span>{chain.icon}</span>
-                    <span>{chain.name}</span>
-                  </div>
-                </Option>
-              ))}
-            </Select>
-          </div>
-        )}
+      <GlowBox>
+        <DialogTitle
+          sx={{
+            backgroundColor: "transparent",
+            color: "white",
+            borderBottom: "1px solid #333",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            py: 2,
+          }}
+        >
+          <Typography variant="h6" component="div" sx={{ fontWeight: 600 }}>
+            {getModalTitle()}
+          </Typography>
+          <IconButton
+            onClick={handleModalClose}
+            sx={{
+              color: "white",
+              "&:hover": {
+                backgroundColor: "rgba(255, 255, 255, 0.1)",
+              },
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
 
-        {/* Search Input */}
-        <div className="px-4">
-          <input
-            type="text"
-            placeholder="Search by name or symbol"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-          />
-        </div>
-
-        {/* Token Type Tabs */}
-        <div className="px-4">
-          <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
-            <button
-              onClick={() => setActiveTab("popular")}
-              className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
-                activeTab === "popular"
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              Popular
-            </button>
-            <button
-              onClick={() => setActiveTab("all")}
-              className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
-                activeTab === "all"
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              All Tokens (
-              {hasApiTokens ? allTokens?.length || 0 : TOKENS.length})
-            </button>
-          </div>
-        </div>
-
-        {/* Loading State */}
-        {isLoading && (
-          <div className="px-4 py-8 text-center text-gray-500">
-            {isCrossChainMode
-              ? `Loading tokens from ${SUPPORTED_CHAINS[selectedChainId]?.name}...`
-              : "Loading tokens from 1inch..."}
-          </div>
-        )}
-
-        {/* Error State */}
-        {error && !hasApiTokens && (
-          <div className="px-4 py-2 text-center text-amber-600 bg-amber-50 mx-4 rounded">
-            {isCrossChainMode
-              ? `Using fallback tokens for ${SUPPORTED_CHAINS[selectedChainId]?.name}`
-              : "Using fallback tokens. Failed to load from 1inch API."}
-          </div>
-        )}
-
-        {/* Success State */}
-        {hasApiTokens && !isLoading && (
-          <div className="px-4 py-2 text-center text-green-600 bg-green-50 mx-4 rounded">
-            ✅ Loaded {allTokens?.length || 0} tokens
-            {isCrossChainMode &&
-              ` from ${SUPPORTED_CHAINS[selectedChainId]?.name}`}
-          </div>
-        )}
-
-        {/* Token List */}
-        {!isLoading && (
-          <div className="modalContent max-h-64 overflow-y-auto">
-            {filteredTokens.length === 0 ? (
-              <div className="px-4 py-8 text-center text-gray-500">
-                {searchQuery ? "No tokens found" : "No tokens available"}
-              </div>
-            ) : (
-              filteredTokens.map((token, i) => {
-                // Check if this token is already selected
-                const otherToken =
-                  modalTarget === "tokenOne" ? tokenTwo : tokenOne;
-                const isAlreadySelected = isCrossChainMode
-                  ? otherToken.address === token.address &&
-                    otherToken.chainId === selectedChainId
-                  : otherToken.address === token.address;
-
-                return (
-                  <div
-                    key={`${token.address}-${selectedChainId}-${i}`}
-                    className={`tokenChoice transition-colors cursor-pointer flex items-center p-3 ${
-                      isAlreadySelected
-                        ? "bg-gray-100 cursor-not-allowed opacity-50"
-                        : "hover:bg-gray-50"
-                    }`}
-                    onClick={() =>
-                      !isAlreadySelected && handleTokenSelect(token)
-                    }
-                  >
-                    <img
-                      src={token.img}
-                      alt={token.ticker}
-                      className="w-8 h-8 rounded-full mr-3"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = `https://token-icons.1inch.io/${token.address}.png`;
-                      }}
-                    />
-                    <div className="flex-1">
-                      <div className="font-medium text-gray-900 flex items-center gap-2">
-                        {token.name}
-                        {isCrossChainMode && (
-                          <span className="text-xs text-gray-500">
-                            {SUPPORTED_CHAINS[selectedChainId]?.icon}
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {token.ticker}
-                        {isCrossChainMode && (
-                          <span className="ml-1 text-xs">
-                            on {SUPPORTED_CHAINS[selectedChainId]?.name}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Show if already selected */}
-                    {isAlreadySelected && (
-                      <div className="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded">
-                        Selected
-                      </div>
-                    )}
-
-                    {/* Show chain badge for cross-chain */}
-                    {isCrossChainMode && !isAlreadySelected && (
-                      <div className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                        {SUPPORTED_CHAINS[selectedChainId]?.symbol}
-                      </div>
-                    )}
-
-                    {/* Show source badge for regular tokens */}
-                    {!isCrossChainMode &&
-                      hasApiTokens &&
-                      !isAlreadySelected && (
-                        <div className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
-                          1inch
-                        </div>
-                      )}
-                  </div>
-                );
-              })
+        <DialogContent
+          sx={{
+            backgroundColor: "transparent",
+            color: "white",
+            p: 0,
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          <Box sx={{ p: 3, display: "flex", flexDirection: "column", gap: 3 }}>
+            {/* Chain Selector for Cross-Chain Mode */}
+            {isCrossChainMode && (
+              <FormControl fullWidth variant="outlined">
+                <InputLabel
+                  sx={{
+                    color: "rgba(255, 255, 255, 0.7)",
+                    "&.Mui-focused": {
+                      color: "#00F5E0",
+                    },
+                  }}
+                >
+                  Select Network
+                </InputLabel>
+                <Select
+                  value={selectedChainId}
+                  onChange={handleChainChange}
+                  label="Select Network"
+                  sx={{
+                    backgroundColor: "#2a2a2a",
+                    color: "white",
+                    "& .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#444",
+                    },
+                    "&:hover .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#666",
+                    },
+                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#00F5E0",
+                    },
+                    "& .MuiSvgIcon-root": {
+                      color: "white",
+                    },
+                  }}
+                  MenuProps={{
+                    PaperProps: {
+                      sx: {
+                        backgroundColor: "primary.light",
+                        border: "1px solid #444",
+                        "& .MuiMenuItem-root": {
+                          color: "white",
+                          "&:hover": {
+                            backgroundColor: "rgba(0, 245, 224, 0.1)",
+                          },
+                          "&.Mui-selected": {
+                            backgroundColor: "rgba(0, 245, 224, 0.2)",
+                          },
+                        },
+                      },
+                    },
+                  }}
+                >
+                  {Object.entries(SUPPORTED_CHAINS).map(([chainId, chain]) => (
+                    <MenuItem key={chainId} value={Number(chainId)}>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
+                        <span>{chain.icon}</span>
+                        <span>{chain.name}</span>
+                      </Box>
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             )}
-          </div>
-        )}
 
-        {/* Footer info */}
-        <div className="px-4 py-2 text-xs text-gray-500 border-t">
-          {isCrossChainMode
-            ? `${filteredTokens.length} tokens on ${SUPPORTED_CHAINS[selectedChainId]?.name}`
-            : hasApiTokens
-            ? `✅ ${allTokens?.length || 0} tokens loaded from 1inch API`
-            : `Using ${TOKENS.length} fallback tokens`}
-        </div>
-      </div>
-    </Modal>
+            {/* Search Input */}
+            <TextField
+              fullWidth
+              placeholder="Search by name or symbol"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              variant="outlined"
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon sx={{ color: "rgba(255, 255, 255, 0.5)" }} />
+                  </InputAdornment>
+                ),
+                sx: {
+                  backgroundColor: "primary.light",
+                  color: "white",
+                  "& .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#444",
+                  },
+                  "&:hover .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#666",
+                  },
+                  "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#00F5E0",
+                  },
+                },
+              }}
+              sx={{
+                "& .MuiInputBase-input::placeholder": {
+                  color: "rgba(255, 255, 255, 0.5)",
+                  opacity: 1,
+                },
+              }}
+            />
+
+            {/* Token Type Tabs */}
+            <Box
+              sx={{
+                backgroundColor: "primary.light",
+                borderRadius: "12px",
+                p: 0.5,
+                "& .MuiTabs-root": {
+                  minHeight: "auto",
+                },
+                "& .MuiTab-root": {
+                  minHeight: "auto",
+                  padding: "8px 16px",
+                  margin: 0,
+                  borderRadius: "8px",
+                  color: "rgba(255, 255, 255, 0.7)",
+                  fontSize: "14px",
+                  fontWeight: 500,
+                  textTransform: "none",
+                  transition: "all 0.2s",
+                  "&:hover": {
+                    color: "white",
+                    backgroundColor: "rgba(255, 255, 255, 0.05)",
+                  },
+                  "&.Mui-selected": {
+                    backgroundColor: "#00F5E0",
+                    color: "#000",
+                    "&:hover": {
+                      backgroundColor: "#00F5E0",
+                      color: "#000",
+                    },
+                  },
+                },
+                "& .MuiTabs-indicator": {
+                  display: "none",
+                },
+              }}
+            >
+              <Tabs
+                value={activeTab}
+                onChange={handleTabChange}
+                variant="fullWidth"
+              >
+                <Tab value="popular" label="Popular" />
+                <Tab
+                  value="all"
+                  label={`All Tokens (${
+                    hasApiTokens ? allTokens?.length || 0 : TOKENS.length
+                  })`}
+                />
+              </Tabs>
+            </Box>
+
+            {/* Status Messages */}
+            {isLoading && (
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  py: 4,
+                  gap: 2,
+                }}
+              >
+                <CircularProgress size={20} sx={{ color: "#00F5E0" }} />
+                <Typography
+                  variant="body2"
+                  sx={{ color: "rgba(255, 255, 255, 0.7)" }}
+                >
+                  {isCrossChainMode
+                    ? `Loading tokens from ${SUPPORTED_CHAINS[selectedChainId]?.name}...`
+                    : "Loading tokens from 1inch..."}
+                </Typography>
+              </Box>
+            )}
+
+            {error && !hasApiTokens && (
+              <Alert
+                severity="warning"
+                sx={{
+                  backgroundColor: "rgba(255, 193, 7, 0.1)",
+                  border: "1px solid rgba(255, 193, 7, 0.3)",
+                  color: "#FFB800",
+                  "& .MuiAlert-icon": {
+                    color: "#FFB800",
+                  },
+                }}
+              >
+                {isCrossChainMode
+                  ? `Using fallback tokens for ${SUPPORTED_CHAINS[selectedChainId]?.name}`
+                  : "Using fallback tokens. Failed to load from 1inch API."}
+              </Alert>
+            )}
+
+            {hasApiTokens && !isLoading && (
+              <Alert
+                severity="success"
+                sx={{
+                  backgroundColor: "rgba(76, 175, 80, 0.1)",
+                  border: "1px solid rgba(76, 175, 80, 0.3)",
+                  color: "#4CAF50",
+                  "& .MuiAlert-icon": {
+                    color: "#4CAF50",
+                  },
+                }}
+              >
+                ✅ Loaded {allTokens?.length || 0} tokens
+                {isCrossChainMode &&
+                  ` from ${SUPPORTED_CHAINS[selectedChainId]?.name}`}
+              </Alert>
+            )}
+          </Box>
+
+          {/* Token List */}
+          {!isLoading && (
+            <Box
+              sx={{
+                flex: 1,
+                overflowY: "auto",
+                maxHeight: "300px",
+                borderTop: "1px solid #333",
+              }}
+            >
+              {filteredTokens.length === 0 ? (
+                <Box sx={{ py: 8, textAlign: "center" }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "rgba(255, 255, 255, 0.5)" }}
+                  >
+                    {searchQuery ? "No tokens found" : "No tokens available"}
+                  </Typography>
+                </Box>
+              ) : (
+                filteredTokens.map((token, i) => {
+                  // Check if this token is already selected
+                  const otherToken =
+                    modalTarget === "tokenOne" ? tokenTwo : tokenOne;
+                  const isAlreadySelected = isCrossChainMode
+                    ? otherToken.address === token.address &&
+                      otherToken.chainId === selectedChainId
+                    : otherToken.address === token.address;
+
+                  return (
+                    <Box
+                      key={`${token.address}-${selectedChainId}-${i}`}
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        p: 2,
+                        cursor: isAlreadySelected ? "not-allowed" : "pointer",
+                        opacity: isAlreadySelected ? 0.5 : 1,
+                        borderBottom: "1px solid #333",
+                        transition: "background-color 0.2s",
+                        "&:hover": {
+                          backgroundColor: isAlreadySelected
+                            ? "transparent"
+                            : "rgba(255, 255, 255, 0.05)",
+                        },
+                        "&:last-child": {
+                          borderBottom: "none",
+                        },
+                      }}
+                      onClick={() =>
+                        !isAlreadySelected && handleTokenSelect(token)
+                      }
+                    >
+                      <Avatar
+                        src={token.img}
+                        alt={token.ticker}
+                        sx={{ width: 32, height: 32, mr: 2 }}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = `https://token-icons.1inch.io/${token.address}.png`;
+                        }}
+                      />
+
+                      <Box sx={{ flex: 1 }}>
+                        <Typography
+                          variant="body1"
+                          sx={{
+                            color: "white",
+                            fontWeight: 500,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1,
+                          }}
+                        >
+                          {token.name}
+                          {isCrossChainMode && (
+                            <Typography
+                              variant="caption"
+                              sx={{ color: "rgba(255, 255, 255, 0.5)" }}
+                            >
+                              {SUPPORTED_CHAINS[selectedChainId]?.icon}
+                            </Typography>
+                          )}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{ color: "rgba(255, 255, 255, 0.7)" }}
+                        >
+                          {token.ticker}
+                          {isCrossChainMode && (
+                            <Typography
+                              component="span"
+                              variant="caption"
+                              sx={{ ml: 1 }}
+                            >
+                              on {SUPPORTED_CHAINS[selectedChainId]?.name}
+                            </Typography>
+                          )}
+                        </Typography>
+                      </Box>
+
+                      {/* Show if already selected */}
+                      {isAlreadySelected && (
+                        <Chip
+                          label="Selected"
+                          size="small"
+                          sx={{
+                            backgroundColor: "rgba(255, 255, 255, 0.1)",
+                            color: "rgba(255, 255, 255, 0.7)",
+                            fontSize: "11px",
+                          }}
+                        />
+                      )}
+
+                      {/* Show chain badge for cross-chain */}
+                      {isCrossChainMode && !isAlreadySelected && (
+                        <Chip
+                          label={SUPPORTED_CHAINS[selectedChainId]?.symbol}
+                          size="small"
+                          sx={{
+                            backgroundColor: "rgba(33, 150, 243, 0.1)",
+                            color: "#2196F3",
+                            fontSize: "11px",
+                          }}
+                        />
+                      )}
+
+                      {/* Show source badge for regular tokens */}
+                      {!isCrossChainMode &&
+                        hasApiTokens &&
+                        !isAlreadySelected && (
+                          <Chip
+                            label="1inch"
+                            size="small"
+                            sx={{
+                              backgroundColor: "rgba(76, 175, 80, 0.1)",
+                              color: "#4CAF50",
+                              fontSize: "11px",
+                            }}
+                          />
+                        )}
+                    </Box>
+                  );
+                })
+              )}
+            </Box>
+          )}
+
+          {/* Footer info */}
+          <Box
+            sx={{
+              p: 2,
+              borderTop: "1px solid #333",
+              backgroundColor: "primary.dark",
+            }}
+          >
+            <Typography
+              variant="caption"
+              sx={{ color: "rgba(255, 255, 255, 0.5)" }}
+            >
+              {isCrossChainMode
+                ? `${filteredTokens.length} tokens on ${SUPPORTED_CHAINS[selectedChainId]?.name}`
+                : hasApiTokens
+                ? `✅ ${allTokens?.length || 0} tokens loaded from 1inch API`
+                : `Using ${TOKENS.length} fallback tokens`}
+            </Typography>
+          </Box>
+        </DialogContent>
+      </GlowBox>
+    </Dialog>
   );
 };
