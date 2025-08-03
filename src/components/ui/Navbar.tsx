@@ -6,7 +6,13 @@ import NavLink from "./Navlink";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Menu, Close } from "@mui/icons-material";
 
-const navItems = [];
+const navItems = [
+  {
+    href: ["/"],
+    label: "Swap",
+  },
+  { href: ["/profile"], label: "Account" },
+];
 
 interface GradientConnectButtonProps {
   customStyles?: string;
@@ -112,6 +118,15 @@ export default function Navbar() {
           </h2>
         </a>
 
+        {/* Desktop Navigation */}
+        <ul className="hidden lg:flex list-none gap-6 m-0 p-4">
+          {navItems.map(({ href, label }) => (
+            <li key={href[0]}>
+              <NavLink href={href}>{label}</NavLink>
+            </li>
+          ))}
+        </ul>
+
         {/* Desktop Connect Button */}
         <div className="hidden lg:block">
           <GradientConnectButton />
@@ -158,6 +173,19 @@ export default function Navbar() {
             <Close sx={{ fontSize: 24 }} />
           </button>
         </div>
+        <ul className="flex flex-col p-4 gap-4">
+          {navItems.map(({ href, label }) => (
+            <li key={href[0]}>
+              <a
+                href={href[0]}
+                onClick={closeMenu}
+                className="block text-white hover:text-[#00F5E0] transition-colors duration-200 py-2"
+              >
+                {label}
+              </a>
+            </li>
+          ))}
+        </ul>
       </div>
     </>
   );
