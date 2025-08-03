@@ -685,7 +685,7 @@ function LimitOrder() {
           </label>
           <div className="relative">
             <Input
-              placeholder={`Enter limit price in ${tokenTwo.ticker}`}
+              placeholder={`Enter limit price`}
               value={limitRate}
               onChange={changeLimitRate}
               disabled={isCreatingOrder}

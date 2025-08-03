@@ -1,8 +1,22 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Button, Tabs, Empty, Popconfirm, message } from "antd";
-import { DeleteOutlined, ReloadOutlined } from "@ant-design/icons";
+import { Button, Empty, message } from "antd";
+import { ReloadOutlined } from "@ant-design/icons";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Button as MuiButton,
+  IconButton,
+  Tabs,
+  Tab,
+  Box,
+  Badge,
+} from "@mui/material";
+import { Delete as DeleteIcon } from "@mui/icons-material";
 import { useAccount, useChainId } from "wagmi";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -77,6 +91,13 @@ const ActiveLimitOrders: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>("active");
   const [loading, setLoading] = useState(false);
   const [msgApi, contextHolder] = message.useMessage();
+
+  // Dialog state
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<LimitOrderData | null>(
+    null
+  );
 
   // Fetch orders from multiple sources
   const fetchOrders = async () => {
@@ -180,16 +201,29 @@ const ActiveLimitOrders: React.FC = () => {
     };
   }, [address, chainId]);
 
+  // Handle cancel dialog
+  const handleCancelClick = (order: LimitOrderData) => {
+    setSelectedOrder(order);
+    setCancelDialogOpen(true);
+  };
+
+  const handleRemoveClick = (order: LimitOrderData) => {
+    setSelectedOrder(order);
+    setRemoveDialogOpen(true);
+  };
+
   // Cancel order (local or API)
-  const cancelOrder = async (order: LimitOrderData) => {
+  const cancelOrder = async () => {
+    if (!selectedOrder) return;
+
     try {
-      if (order.source === "local") {
+      if (selectedOrder.source === "local") {
         // Handle local orders
         const existingOrders = JSON.parse(
           localStorage.getItem("limitOrders") || "[]"
         );
         const updatedOrders = existingOrders.map((o: any) =>
-          o.id === order.id || o.orderHash === order.orderHash
+          o.id === selectedOrder.id || o.orderHash === selectedOrder.orderHash
             ? { ...o, status: "cancelled" }
             : o
         );
@@ -200,7 +234,7 @@ const ActiveLimitOrders: React.FC = () => {
         await axios.delete(`/api/proxy/1inch/orderbook/cancel-order`, {
           params: {
             chainId,
-            orderHash: order.orderHash,
+            orderHash: selectedOrder.orderHash,
           },
         });
         msgApi.success("Order cancelled successfully");
@@ -211,20 +245,28 @@ const ActiveLimitOrders: React.FC = () => {
     } catch (error) {
       console.error("Error cancelling order:", error);
       msgApi.error("Failed to cancel order");
+    } finally {
+      setCancelDialogOpen(false);
+      setSelectedOrder(null);
     }
   };
 
   // Delete order from localStorage (for cancelled/expired orders)
-  const deleteOrder = (order: LimitOrderData) => {
+  const deleteOrder = () => {
+    if (!selectedOrder) return;
+
     const existingOrders = JSON.parse(
       localStorage.getItem("limitOrders") || "[]"
     );
     const updatedOrders = existingOrders.filter(
-      (o: any) => o.id !== order.id && o.orderHash !== order.orderHash
+      (o: any) =>
+        o.id !== selectedOrder.id && o.orderHash !== selectedOrder.orderHash
     );
     localStorage.setItem("limitOrders", JSON.stringify(updatedOrders));
     msgApi.success("Order removed from list");
     fetchOrders();
+    setRemoveDialogOpen(false);
+    setSelectedOrder(null);
   };
 
   // Filter orders by status
@@ -334,45 +376,10 @@ const ActiveLimitOrders: React.FC = () => {
 
   const filteredOrders = getFilteredOrders();
 
-  const tabItems = [
-    {
-      key: "active",
-      label: (
-        <div className="flex items-center gap-2">
-          <span>Active</span>
-          <span className="bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full text-xs">
-            {orders.filter((o) => o.status === "active").length}
-          </span>
-        </div>
-      ),
-    },
-    {
-      key: "filled",
-      label: (
-        <div className="flex items-center gap-2">
-          <span>Filled</span>
-          <span className="bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full text-xs">
-            {orders.filter((o) => o.status === "filled").length}
-          </span>
-        </div>
-      ),
-    },
-    {
-      key: "history",
-      label: (
-        <div className="flex items-center gap-2">
-          <span>History</span>
-          <span className="bg-gray-500/20 text-gray-400 px-2 py-0.5 rounded-full text-xs">
-            {
-              orders.filter((o) =>
-                ["expired", "cancelled"].includes(o.status || "")
-              ).length
-            }
-          </span>
-        </div>
-      ),
-    },
-  ];
+  // Handle tab change
+  const handleTabChange = (event: React.SyntheticEvent, newValue: string) => {
+    setActiveTab(newValue);
+  };
 
   return (
     <>
@@ -392,15 +399,120 @@ const ActiveLimitOrders: React.FC = () => {
           </Button>
         </div>
 
-        {/* Tabs */}
-        <div className="px-4">
-          <Tabs
-            activeKey={activeTab}
-            onChange={setActiveTab}
-            items={tabItems}
-            className="custom-tabs"
-            size="small"
-          />
+        {/* MUI Tabs */}
+        <div className="px-4 mb-4">
+          <Box
+            sx={{
+              backgroundColor: "rgba(55, 65, 81, 0.5)",
+              borderRadius: "12px",
+              padding: "4px",
+              "& .MuiTabs-root": {
+                minHeight: "auto",
+              },
+              "& .MuiTab-root": {
+                minHeight: "auto",
+                padding: "8px 16px",
+                margin: 0,
+                borderRadius: "8px",
+                color: "#9CA3AF",
+                fontSize: "14px",
+                fontWeight: 500,
+                textTransform: "none",
+                transition: "all 0.2s",
+                "&:hover": {
+                  color: "#F3F4F6",
+                },
+                "&.Mui-selected": {
+                  backgroundColor: "#00F5E0",
+                  color: "#000",
+                  "&:hover": {
+                    color: "#000",
+                  },
+                },
+              },
+              "& .MuiTabs-indicator": {
+                display: "none",
+              },
+            }}
+          >
+            <Tabs
+              value={activeTab}
+              onChange={handleTabChange}
+              variant="fullWidth"
+            >
+              <Tab
+                value="active"
+                label={
+                  <div className="flex items-center gap-4">
+                    <span>Active</span>
+                    <Badge
+                      badgeContent={
+                        orders.filter((o) => o.status === "active").length
+                      }
+                      sx={{
+                        "& .MuiBadge-badge": {
+                          backgroundColor: "#fff",
+                          color: "#000",
+                          fontSize: "11px",
+                          height: "18px",
+                          minWidth: "18px",
+                          borderRadius: "9px",
+                        },
+                      }}
+                    />
+                  </div>
+                }
+              />
+              <Tab
+                value="filled"
+                label={
+                  <div className="flex items-center gap-2">
+                    <span>Filled</span>
+                    <Badge
+                      badgeContent={
+                        orders.filter((o) => o.status === "filled").length
+                      }
+                      sx={{
+                        "& .MuiBadge-badge": {
+                          backgroundColor: "rgba(34, 197, 94, 0.2)",
+                          color: "#4ADE80",
+                          fontSize: "11px",
+                          height: "18px",
+                          minWidth: "18px",
+                          borderRadius: "9px",
+                        },
+                      }}
+                    />
+                  </div>
+                }
+              />
+              <Tab
+                value="history"
+                label={
+                  <div className="flex items-center gap-4">
+                    <span>History</span>
+                    <Badge
+                      badgeContent={
+                        orders.filter((o) =>
+                          ["expired", "cancelled"].includes(o.status || "")
+                        ).length
+                      }
+                      sx={{
+                        "& .MuiBadge-badge": {
+                          backgroundColor: "#fff",
+                          color: "#000",
+                          fontSize: "11px",
+                          height: "18px",
+                          minWidth: "18px",
+                          borderRadius: "9px",
+                        },
+                      }}
+                    />
+                  </div>
+                }
+              />
+            </Tabs>
+          </Box>
         </div>
 
         {/* Orders List */}
@@ -453,66 +565,47 @@ const ActiveLimitOrders: React.FC = () => {
                           {getOrderDisplayInfo(order).priceUSD}
                         </span>
                       )}
-                      {/* <span
-                        className={`text-xs ${
-                          getOrderDisplayInfo(order).sourceColor
-                        }`}
-                      >
-                        {getOrderDisplayInfo(order).source}
-                      </span> */}
                     </div>
 
                     <div className="flex items-center gap-2">
                       {order.status === "active" && (
-                        <Popconfirm
-                          title="Cancel this order?"
-                          description="This action cannot be undone."
-                          onConfirm={() => cancelOrder(order)}
-                          okText="Yes"
-                          cancelText="No"
-                          okButtonProps={{
-                            className:
-                              "bg-red-600 hover:bg-red-700 border-red-600",
-                          }}
-                          cancelButtonProps={{
-                            className:
-                              "border-gray-600 text-gray-400 hover:border-gray-500 hover:text-white",
+                        <IconButton
+                          size="small"
+                          onClick={() => handleCancelClick(order)}
+                          sx={{
+                            backgroundColor: "rgba(220, 38, 38, 0.2)",
+                            border: "1px solid rgba(239, 68, 68, 0.3)",
+                            color: "#F87171",
+                            "&:hover": {
+                              backgroundColor: "rgba(220, 38, 38, 0.3)",
+                              borderColor: "rgba(239, 68, 68, 0.5)",
+                            },
+                            width: "32px",
+                            height: "32px",
                           }}
                         >
-                          <Button
-                            size="small"
-                            danger
-                            icon={<DeleteOutlined />}
-                            className="bg-red-600/20 border-red-500/30 text-red-400 hover:bg-red-600/30 hover:border-red-500/50"
-                          >
-                            Cancel
-                          </Button>
-                        </Popconfirm>
+                          <DeleteIcon sx={{ fontSize: 16 }} />
+                        </IconButton>
                       )}
 
                       {order.status !== "active" && (
-                        <Popconfirm
-                          title="Remove this order from list?"
-                          onConfirm={() => deleteOrder(order)}
-                          okText="Yes"
-                          cancelText="No"
-                          okButtonProps={{
-                            className:
-                              "bg-gray-600 hover:bg-gray-700 border-gray-600",
-                          }}
-                          cancelButtonProps={{
-                            className:
-                              "border-gray-600 text-gray-400 hover:border-gray-500 hover:text-white",
+                        <IconButton
+                          size="small"
+                          onClick={() => handleRemoveClick(order)}
+                          sx={{
+                            backgroundColor: "rgba(107, 114, 128, 0.2)",
+                            border: "1px solid rgba(107, 114, 128, 0.3)",
+                            color: "#9CA3AF",
+                            "&:hover": {
+                              backgroundColor: "rgba(107, 114, 128, 0.3)",
+                              borderColor: "rgba(107, 114, 128, 0.5)",
+                            },
+                            width: "32px",
+                            height: "32px",
                           }}
                         >
-                          <Button
-                            size="small"
-                            icon={<DeleteOutlined />}
-                            className="bg-gray-600/20 border-gray-500/30 text-gray-400 hover:bg-gray-600/30 hover:border-gray-500/50"
-                          >
-                            Remove
-                          </Button>
-                        </Popconfirm>
+                          <DeleteIcon sx={{ fontSize: 16 }} />
+                        </IconButton>
                       )}
                     </div>
                   </div>
@@ -593,45 +686,107 @@ const ActiveLimitOrders: React.FC = () => {
         </div>
       </div>
 
-      <style jsx global>{`
-        .custom-tabs .ant-tabs-nav {
-          background: rgba(55, 65, 81, 0.5);
-          border-radius: 0.75rem;
-          margin-bottom: 1rem;
-          padding: 0.25rem;
-        }
+      {/* Cancel Order Dialog */}
+      <Dialog
+        open={cancelDialogOpen}
+        onClose={() => setCancelDialogOpen(false)}
+        PaperProps={{
+          sx: {
+            backgroundColor: "#1f2937",
+            border: "1px solid #374151",
+            borderRadius: "12px",
+            color: "white",
+          },
+        }}
+      >
+        <DialogTitle sx={{ color: "white", fontWeight: 600 }}>
+          Cancel this order?
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ color: "#d1d5db" }}>
+            This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ padding: "16px 24px" }}>
+          <MuiButton
+            onClick={() => setCancelDialogOpen(false)}
+            sx={{
+              border: "1px solid #6b7280",
+              color: "#9ca3af",
+              "&:hover": {
+                borderColor: "#6b7280",
+                backgroundColor: "rgba(107, 114, 128, 0.1)",
+                color: "white",
+              },
+            }}
+          >
+            No
+          </MuiButton>
+          <MuiButton
+            onClick={cancelOrder}
+            sx={{
+              backgroundColor: "#dc2626",
+              color: "white",
+              "&:hover": {
+                backgroundColor: "#b91c1c",
+              },
+            }}
+          >
+            Yes
+          </MuiButton>
+        </DialogActions>
+      </Dialog>
 
-        .custom-tabs .ant-tabs-tab {
-          background: transparent;
-          border: none;
-          color: #9ca3af;
-          margin: 0;
-          padding: 0.5rem 1rem;
-          border-radius: 0.5rem;
-          transition: all 0.2s;
-        }
-
-        .custom-tabs .ant-tabs-tab:hover {
-          color: #f3f4f6;
-        }
-
-        .custom-tabs .ant-tabs-tab-active {
-          background: #00f5e0;
-          color: #000;
-        }
-
-        .custom-tabs .ant-tabs-tab-active:hover {
-          color: #000;
-        }
-
-        .custom-tabs .ant-tabs-ink-bar {
-          display: none;
-        }
-
-        .custom-tabs .ant-tabs-content-holder {
-          display: none;
-        }
-      `}</style>
+      {/* Remove Order Dialog */}
+      <Dialog
+        open={removeDialogOpen}
+        onClose={() => setRemoveDialogOpen(false)}
+        PaperProps={{
+          sx: {
+            backgroundColor: "#1f2937",
+            border: "1px solid #374151",
+            borderRadius: "12px",
+            color: "white",
+          },
+        }}
+      >
+        <DialogTitle sx={{ color: "white", fontWeight: 600 }}>
+          Remove this order from list?
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ color: "#d1d5db" }}>
+            This will remove the order from your local history.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ padding: "16px 24px" }}>
+          <MuiButton
+            onClick={() => setRemoveDialogOpen(false)}
+            sx={{
+              border: "1px solid #6b7280",
+              color: "#9ca3af",
+              "&:hover": {
+                borderColor: "#6b7280",
+                backgroundColor: "rgba(107, 114, 128, 0.1)",
+                color: "white",
+              },
+            }}
+          >
+            No
+          </MuiButton>
+          <MuiButton
+            onClick={deleteOrder}
+            sx={{
+              backgroundColor: "#6b7280",
+              color: "white",
+              "&:hover": {
+                backgroundColor: "#4b5563",
+              },
+            }}
+          >
+            Yes
+          </MuiButton>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };

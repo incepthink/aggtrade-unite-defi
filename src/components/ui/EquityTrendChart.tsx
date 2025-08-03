@@ -1,9 +1,8 @@
-// src/components/EquityTrendChart.tsx - Styled with transparent glow
+// src/components/EquityTrendChart.tsx - With custom hardcoded X-axis
 import {
   ResponsiveContainer,
   AreaChart,
   Area,
-  XAxis,
   YAxis,
   Tooltip,
   CartesianGrid,
@@ -15,12 +14,11 @@ import GlowBox from "@/components/ui/GlowBox";
 
 export default function EquityTrendChart() {
   const { isConnected } = useAccount();
-  const [timeRange, setTimeRange] = useState<"7" | "30">("7");
   const [isMobile, setIsMobile] = useState(false);
 
-  // Use the custom hook
+  // Fixed timeRange to 7 days only
   const { data, isLoading, error, isSuccess } = useEquityTrend({
-    timeRange,
+    timeRange: "7",
     enabled: isConnected,
   });
 
@@ -42,7 +40,6 @@ export default function EquityTrendChart() {
     if (active && payload && payload.length) {
       return (
         <div className="bg-black/80 backdrop-blur-sm border border-cyan-400/30 rounded-lg p-3 shadow-xl">
-          <p className="text-slate-400 text-sm font-medium mb-1">{label}</p>
           <p className="text-cyan-300 font-bold text-lg">
             $
             {payload[0].value.toLocaleString("en-US", {
@@ -83,6 +80,28 @@ export default function EquityTrendChart() {
 
   const stats = getPortfolioStats();
 
+  // Generate hardcoded previous 7 days for custom X-axis
+  const generateLast7Days = () => {
+    const days = [];
+    const today = new Date();
+
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(today.getDate() - i);
+
+      const formattedDate = date.toLocaleDateString("en-US", {
+        day: "numeric",
+        month: "short",
+      });
+
+      days.push(formattedDate);
+    }
+
+    return days;
+  };
+
+  const last7Days = generateLast7Days();
+
   return (
     <GlowBox sx={{ p: 3, height: 400 }}>
       <header className="flex items-center justify-between mb-4">
@@ -107,28 +126,7 @@ export default function EquityTrendChart() {
           )}
         </div>
 
-        <div className="flex gap-2">
-          <button
-            className={`px-3 py-1 rounded text-sm font-medium transition-all duration-200 ${
-              timeRange === "7"
-                ? "bg-cyan-400/20 text-cyan-400 border border-cyan-400/40 shadow-lg shadow-cyan-400/20"
-                : "bg-transparent text-white/60 border border-white/20 hover:border-cyan-400/40 hover:text-cyan-400"
-            }`}
-            onClick={() => setTimeRange("7")}
-          >
-            7 days
-          </button>
-          <button
-            className={`px-3 py-1 rounded text-sm font-medium transition-all duration-200 ${
-              timeRange === "30"
-                ? "bg-cyan-400/20 text-cyan-400 border border-cyan-400/40 shadow-lg shadow-cyan-400/20"
-                : "bg-transparent text-white/60 border border-white/20 hover:border-cyan-400/40 hover:text-cyan-400"
-            }`}
-            onClick={() => setTimeRange("30")}
-          >
-            30 days
-          </button>
-        </div>
+        <div className="text-xs text-white/40">7 day trend</div>
       </header>
 
       {error && (
@@ -137,116 +135,120 @@ export default function EquityTrendChart() {
         </div>
       )}
 
-      {/* Show chart only when we have real data */}
-      {hasRealData ? (
-        <ResponsiveContainer width="100%" height={300}>
-          <AreaChart
-            data={data}
-            margin={
-              isMobile
-                ? { top: 10, right: 5, left: 5, bottom: 5 }
-                : { top: 10, right: 20, left: 20, bottom: 20 }
-            }
-          >
-            <defs>
-              {/* Enhanced gradient with cyan theme */}
-              <linearGradient id="equityGradient" x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0%" stopColor="#00FFE9" stopOpacity={0.6} />
-                <stop offset="50%" stopColor="#00D4FF" stopOpacity={0.3} />
-                <stop offset="100%" stopColor="#0099CC" stopOpacity={0.1} />
-              </linearGradient>
+      {/* Chart Container */}
+      <div className="relative">
+        {/* Chart without X-axis */}
+        {hasRealData ? (
+          <ResponsiveContainer width="100%" height={260}>
+            <AreaChart
+              data={data}
+              margin={
+                isMobile
+                  ? { top: 10, right: 5, left: 5, bottom: 0 }
+                  : { top: 10, right: 20, left: 20, bottom: 0 }
+              }
+            >
+              <defs>
+                {/* Enhanced gradient with cyan theme */}
+                <linearGradient id="equityGradient" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stopColor="#00FFE9" stopOpacity={0.6} />
+                  <stop offset="50%" stopColor="#00D4FF" stopOpacity={0.3} />
+                  <stop offset="100%" stopColor="#0099CC" stopOpacity={0.1} />
+                </linearGradient>
 
-              {/* Stroke gradient */}
-              <linearGradient id="strokeGradient" x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0%" stopColor="#00FFE9" stopOpacity={1} />
-                <stop offset="100%" stopColor="#00D4FF" stopOpacity={0.8} />
-              </linearGradient>
-            </defs>
+                {/* Stroke gradient */}
+                <linearGradient id="strokeGradient" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stopColor="#00FFE9" stopOpacity={1} />
+                  <stop offset="100%" stopColor="#00D4FF" stopOpacity={0.8} />
+                </linearGradient>
+              </defs>
 
-            <CartesianGrid
-              stroke="#ffffff10"
-              strokeDasharray="2 6"
-              vertical={false}
-              opacity={0.5}
-            />
+              <CartesianGrid
+                stroke="#ffffff10"
+                strokeDasharray="2 6"
+                vertical={false}
+                opacity={0.5}
+              />
 
-            <XAxis
-              dataKey="t"
-              tickLine={false}
-              axisLine={false}
-              tick={{
-                fill: "#ffffff80",
-                fontSize: isMobile ? 10 : 11,
-                fontWeight: 500,
-              }}
-              tickMargin={8}
-              interval={isMobile ? "preserveStartEnd" : "preserveStart"}
-            />
+              {/* No XAxis component - we'll add custom one below */}
 
-            <YAxis
-              tickLine={false}
-              axisLine={false}
-              tick={{
-                fill: "#ffffff80",
-                fontSize: isMobile ? 10 : 11,
-                fontWeight: 500,
-              }}
-              tickMargin={8}
-              domain={["dataMin * 0.95", "dataMax * 1.05"]}
-              tickFormatter={(value) => `$${value.toFixed(0)}`}
-              width={isMobile ? 40 : 60}
-            />
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                tick={{
+                  fill: "#ffffff80",
+                  fontSize: isMobile ? 10 : 11,
+                  fontWeight: 500,
+                }}
+                tickMargin={8}
+                domain={["dataMin * 0.95", "dataMax * 1.05"]}
+                tickFormatter={(value) => `$${value.toFixed(0)}`}
+                width={isMobile ? 40 : 60}
+              />
 
-            <Tooltip
-              content={<CustomTooltip />}
-              cursor={{
-                stroke: "#00FFE9",
-                strokeWidth: 1,
-                strokeOpacity: 0.3,
-              }}
-            />
+              <Tooltip
+                content={<CustomTooltip />}
+                cursor={{
+                  stroke: "#00FFE9",
+                  strokeWidth: 1,
+                  strokeOpacity: 0.3,
+                }}
+              />
 
-            <Area
-              type="monotone"
-              dataKey="v"
-              stroke="url(#strokeGradient)"
-              strokeWidth={2}
-              fill="url(#equityGradient)"
-              dot={false}
-              activeDot={{
-                r: isMobile ? 4 : 6,
-                fill: "#00FFE9",
-                stroke: "#ffffff",
-                strokeWidth: 2,
-                style: {
-                  filter: "drop-shadow(0 0 8px rgba(0, 255, 233, 0.6))",
-                },
-              }}
-              animationDuration={2000}
-              animationEasing="ease-out"
-            />
-          </AreaChart>
-        </ResponsiveContainer>
-      ) : (
-        /* No data state */
-        <div className="flex flex-col items-center justify-center h-[300px] text-center">
-          <div className="w-16 h-16 mb-4 bg-white/5 rounded-lg flex items-center justify-center">
-            <span className="text-2xl text-white/20">📊</span>
-          </div>
-          <div className="space-y-2">
-            <p className="text-white/60 text-sm">
-              {isLoading
-                ? "Loading portfolio data..."
-                : "No equity data available"}
-            </p>
-            {!isConnected && (
-              <p className="text-white/40 text-xs">
-                Connect your wallet to view equity trends
+              <Area
+                type="monotone"
+                dataKey="v"
+                stroke="url(#strokeGradient)"
+                strokeWidth={2}
+                fill="url(#equityGradient)"
+                dot={false}
+                activeDot={{
+                  r: isMobile ? 4 : 6,
+                  fill: "#00FFE9",
+                  stroke: "#ffffff",
+                  strokeWidth: 2,
+                  style: {
+                    filter: "drop-shadow(0 0 8px rgba(0, 255, 233, 0.6))",
+                  },
+                }}
+                animationDuration={2000}
+                animationEasing="ease-out"
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        ) : (
+          /* No data state */
+          <div className="flex flex-col items-center justify-center h-[260px] text-center">
+            <div className="w-16 h-16 mb-4 bg-white/5 rounded-lg flex items-center justify-center">
+              <span className="text-2xl text-white/20">📊</span>
+            </div>
+            <div className="space-y-2">
+              <p className="text-white/60 text-sm">
+                {isLoading
+                  ? "Loading portfolio data..."
+                  : "No equity data available"}
               </p>
-            )}
+              {!isConnected && (
+                <p className="text-white/40 text-xs">
+                  Connect your wallet to view equity trends
+                </p>
+              )}
+            </div>
           </div>
+        )}
+
+        {/* Custom Hardcoded X-Axis */}
+        <div className="flex justify-between items-center mt-2 px-4 md:px-5">
+          {last7Days.map((date, index) => (
+            <div
+              key={index}
+              className="text-xs text-white/60 font-medium text-center flex-1"
+            >
+              {date}
+            </div>
+          ))}
         </div>
-      )}
+      </div>
 
       {/* Data points indicator */}
       {hasRealData && (

@@ -10,10 +10,15 @@ interface NavLinkProps {
 export default function NavLink({ href, children }: NavLinkProps) {
   const pathname = usePathname() || "";
 
-  // Check if current pathname matches any of the hrefs or starts with any of them
-  const isActive = href.some(
-    (path) => pathname === path || pathname.startsWith(path)
-  );
+  // Check if current pathname matches any of the hrefs
+  const isActive = href.some((path) => {
+    // Handle root path specially to avoid matching everything
+    if (path === "/") {
+      return pathname === "/";
+    }
+    // For other paths, check exact match or if pathname starts with the path
+    return pathname === path || pathname.startsWith(path + "/");
+  });
 
   // Use the first href as the primary link destination
   const primaryHref = href[0];

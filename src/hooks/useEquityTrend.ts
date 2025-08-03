@@ -48,6 +48,7 @@ async function fetchHistoricalPortfolio(
 
     if (data?.result) {
       const history = data.result;
+      console.log("HSITORY::", history);
 
       // Convert the history data to our format
       history.forEach((point: any) => {
