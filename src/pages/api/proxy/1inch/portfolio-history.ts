@@ -26,7 +26,7 @@ export default async function handler(
 
   try {
     const response = await fetch(
-      `${ONEINCH_BASE_URL}/portfolio/portfolio/v4/general/value_chart?addresses=${addresses}&timerange=1week&chain_id=1&use_cache=true`,
+      `${ONEINCH_BASE_URL}/portfolio/portfolio/v4/general/value_chart?addresses=${addresses}&timerange=1week&chain_id=1`,
       {
         method: "GET",
         headers: {

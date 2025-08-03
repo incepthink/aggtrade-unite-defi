@@ -108,29 +108,31 @@ async function fetchSpotBalance(address: string): Promise<SpotBalanceData> {
 
       // Process each token balance
       tokenList.forEach((tokenData: any) => {
-        const readableBalance = parseFloat(tokenData.amount);
-        const usdValue = parseFloat(tokenData.value_usd) || 0;
-        const currentPrice =
-          readableBalance > 0 ? usdValue / readableBalance : 0;
+        if (tokenData.chain_id === 1) {
+          const readableBalance = parseFloat(tokenData.amount);
+          const usdValue = parseFloat(tokenData.value_usd) || 0;
+          const currentPrice =
+            readableBalance > 0 ? usdValue / readableBalance : 0;
 
-        // Only include tokens with meaningful value (>$0.01)
-        if (usdValue > 0.01) {
-          tokens.push({
-            symbol: tokenData.symbol || "UNKNOWN",
-            balance: readableBalance,
-            contractAddress: tokenData.contract_address,
-            decimals: getTokenDecimals(
-              tokenData.contract_address,
-              tokenData.symbol
-            ),
-            name: tokenData.name || "Unknown Token",
-            logo: tokenData.logo,
-            price: currentPrice,
-            usdValue: usdValue,
-          });
+          // Only include tokens with meaningful value (>$0.01)
+          if (usdValue > 0.01) {
+            tokens.push({
+              symbol: tokenData.symbol || "UNKNOWN",
+              balance: readableBalance,
+              contractAddress: tokenData.contract_address,
+              decimals: getTokenDecimals(
+                tokenData.contract_address,
+                tokenData.symbol
+              ),
+              name: tokenData.name || "Unknown Token",
+              logo: tokenData.logo,
+              price: currentPrice,
+              usdValue: usdValue,
+            });
+          }
+
+          totalUsdValue += usdValue;
         }
-
-        totalUsdValue += usdValue;
       });
     }
 

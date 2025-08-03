@@ -8,6 +8,8 @@ import GlowBox from "@/components/ui/GlowBox";
 interface RecentTransactionCardProps {
   /** Provide your own image URL or local import */
   placeholderSrc?: string;
+  /** Callback when "View All" is clicked */
+  onViewAll?: () => void;
 }
 
 interface CombinedActivity {
@@ -20,6 +22,7 @@ interface CombinedActivity {
 
 export default function RecentTransactionCard({
   placeholderSrc = "/assets/no-data-dark.svg",
+  onViewAll,
 }: RecentTransactionCardProps) {
   const { address, isConnected } = useAccount();
   const {
@@ -202,7 +205,10 @@ export default function RecentTransactionCard({
           )}
         </div>
         {hasActivity && (
-          <button className="text-sm text-cyan-400 hover:text-cyan-300 hover:underline transition-colors">
+          <button
+            onClick={onViewAll}
+            className="text-sm text-cyan-400 hover:text-cyan-300 hover:underline transition-colors"
+          >
             View All
           </button>
         )}
