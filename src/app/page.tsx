@@ -1,40 +1,46 @@
+"use client";
+
 import GlowBox from "@/components/ui/GlowBox";
 import ChartSpot, { ChartHeader } from "@/components/chart/ChartSpot";
-import SwapContainer from "@/components/swap/SwapContainer";
-// import TokenBalancesCard from "@/components/spot/TokenBalancesCard";
+import SwapContainer, { SwapType } from "@/components/swap/SwapContainer";
 import TokenSelect from "@/components/ui/TokenSelect";
 import { TokenSelectModal } from "@/components/ui/TokenSelectModal";
+import ActiveLimitOrders from "@/components/swap/swapTypes/LimitOrder/ActiveLimitOrders";
 import { Box, Container, Stack } from "@mui/material";
-import React from "react";
+import React, { useState } from "react";
 
 const page = () => {
+  const [activeSwapTab, setActiveSwapTab] = useState<SwapType>("classic");
+
+  const handleTabChange = (tab: SwapType) => {
+    setActiveSwapTab(tab);
+  };
   return (
     <Container
       maxWidth="xl"
       sx={{
-        px: { xs: 1, sm: 2, md: 3 }, // Responsive padding
-        py: { xs: 1, sm: 2 }, // Responsive vertical padding
-        maxWidth: { xs: "100%", lg: "1400px", xl: "1600px" }, // Limit max width on large screens
+        px: { xs: 1, sm: 2, md: 3 },
+        py: { xs: 1, sm: 2 },
+        maxWidth: { xs: "100%", lg: "1400px", xl: "1800px" }, // Increased for wider layout
       }}
     >
       <TokenSelectModal />
       <Stack spacing={{ xs: 2, sm: 2 }}>
-        {" "}
-        {/* Responsive spacing */}
         <Box>
           <TokenSelect />
         </Box>
+
         {/* Main Content Area - Responsive Layout */}
         <Stack
-          direction={{ xs: "column", lg: "row" }} // Stack vertically on mobile, horizontally on large screens
+          direction={{ xs: "column", lg: "row" }}
           spacing={{ xs: 1, sm: 2 }}
           alignItems="stretch"
         >
           {/* Chart Section */}
           <Box
             sx={{
-              flex: { lg: 2 },
-              order: { xs: 2, lg: 1 }, // Chart comes second on mobile, first on desktop
+              flex: { lg: 1.2 }, // Adjusted ratio
+              order: { xs: 2, lg: 1 },
               display: "flex",
               flexDirection: "column",
               gap: { xs: 1, sm: 2 },
@@ -50,7 +56,7 @@ const page = () => {
               <Box sx={{ display: { xs: "block", md: "none" }, mt: 2, mb: 1 }}>
                 <GlowBox
                   sx={{
-                    p: 0, // Remove default padding
+                    p: 0,
                     overflow: "hidden",
                   }}
                 >
@@ -88,50 +94,79 @@ const page = () => {
                     "radial-gradient(circle, rgba(255,255,255,0.2) 1px, transparent 1px)",
                   backgroundSize: { xs: "20px 20px", sm: "30px 30px" },
                   overflow: "hidden",
-                  p: { xs: 0, md: 2 }, // No padding on mobile, normal padding on medium screens and up
+                  p: { xs: 0, md: 2 },
                 }}
               >
                 <ChartSpot />
               </GlowBox>
             </Box>
+            {activeSwapTab === "limit" && (
+              <Box
+                sx={{
+                  flex: { lg: 1.2 },
+                  order: { xs: 3, lg: 3 },
+                  minWidth: { xs: "auto", lg: "500px" },
+                  overflow: "hidden",
+                }}
+              >
+                <GlowBox
+                  sx={{
+                    height: "100%",
+                    maxHeight: "100%",
+                    minHeight: { xs: "400px", md: "500px" },
+                    overflow: "hidden",
+                    "& .MuiBox-root": {
+                      overflow: "auto",
+                    },
+                  }}
+                >
+                  <ActiveLimitOrders />
+                </GlowBox>
+              </Box>
+            )}
           </Box>
 
           {/* Swap Section */}
           <Box
             sx={{
-              flex: { lg: 1 },
-              order: { xs: 1, lg: 2 }, // Swap comes first on mobile, second on desktop
+              flex: { lg: activeSwapTab === "limit" ? 1 : 1.8 }, // Adjust flex based on active tab
+              order: { xs: 1, lg: 2 },
               minWidth: { xs: "auto", lg: "550px" }, // Responsive height
               maxWidth: { lg: "400px", xl: "450px" }, // Limit max width of swap panel
-              overflow: "hidden", // Prevent content from spilling out
+              overflow: "hidden",
             }}
           >
             <GlowBox
               sx={{
                 height: "100%",
-                maxHeight: "100%", // Ensure GlowBox respects parent height
-                minHeight: { xs: "400px", sm: "450px" }, // Ensure adequate height on mobile
-                overflow: "hidden", // Prevent overflow
+                maxHeight: "100%",
+                minHeight: { xs: "400px", sm: "450px" },
+                overflow: "hidden",
+                p: { xs: 2, md: 3 },
               }}
             >
-              <SwapContainer />
+              <SwapContainer onTabChange={handleTabChange} />
             </GlowBox>
           </Box>
+
+          {/* Active Limit Orders - Only show when limit tab is active */}
         </Stack>
-        {/* Token Balances Section */}
-        {/* <Box>
-          <GlowBox
-            sx={{
-              minHeight: { xs: "200px", sm: "250px" }, // Responsive minimum height
-              "& .MuiBox-root": {
-                // Style nested boxes if needed
-                overflow: "auto", // Handle overflow on small screens
-              },
-            }}
-          >
-            <TokenBalancesCard />
-          </GlowBox>
-        </Box> */}
+
+        {/* Active Limit Orders Section - Mobile Full Width */}
+        {activeSwapTab === "limit" && (
+          <Box sx={{ display: { xs: "block", lg: "none" } }}>
+            <GlowBox
+              sx={{
+                minHeight: { xs: "400px" },
+                "& .MuiBox-root": {
+                  overflow: "auto",
+                },
+              }}
+            >
+              <ActiveLimitOrders />
+            </GlowBox>
+          </Box>
+        )}
       </Stack>
     </Container>
   );

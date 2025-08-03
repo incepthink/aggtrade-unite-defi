@@ -1,4 +1,4 @@
-// pages/api/proxy/1inch/portfolio-detailed.ts
+// pages/api/proxy/1inch/orderbook/create-order.ts
 import { NextApiRequest, NextApiResponse } from "next";
 
 const ONEINCH_KEY = process.env.ONEINCH_KEY;
@@ -8,14 +8,16 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  if (req.method !== "GET") {
+  if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { addresses } = req.query;
+  const { chainId, orderData } = req.body;
 
-  if (!addresses) {
-    return res.status(400).json({ error: "addresses parameter is required" });
+  if (!chainId || !orderData) {
+    return res
+      .status(400)
+      .json({ error: "chainId and orderData are required" });
   }
 
   if (!ONEINCH_KEY) {
@@ -24,24 +26,28 @@ export default async function handler(
 
   try {
     const response = await fetch(
-      `${ONEINCH_BASE_URL}/portfolio/portfolio/v4/overview/erc20/details?addresses=${addresses}`,
+      `${ONEINCH_BASE_URL}/orderbook/v4.0/${chainId}`,
       {
-        method: "GET",
+        method: "POST",
         headers: {
           Authorization: `Bearer ${ONEINCH_KEY}`,
           "Content-Type": "application/json",
         },
+        body: JSON.stringify(orderData),
       }
     );
 
     if (!response.ok) {
-      throw new Error(`1inch API error: ${response.status}`);
+      const errorData = await response.text();
+      throw new Error(
+        `1inch Orderbook API error: ${response.status} - ${errorData}`
+      );
     }
 
     const data = await response.json();
     res.status(200).json(data);
   } catch (error) {
-    console.error("Portfolio detailed API error:", error);
-    res.status(500).json({ error: "Failed to fetch detailed portfolio" });
+    console.error("Create order API error:", error);
+    res.status(500).json({ error: "Failed to create limit order" });
   }
 }

@@ -1,4 +1,4 @@
-// pages/api/proxy/1inch/portfolio-detailed.ts
+// pages/api/proxy/1inch/orderbook/get-order-status.ts
 import { NextApiRequest, NextApiResponse } from "next";
 
 const ONEINCH_KEY = process.env.ONEINCH_KEY;
@@ -12,10 +12,12 @@ export default async function handler(
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { addresses } = req.query;
+  const { chainId, orderHash } = req.query;
 
-  if (!addresses) {
-    return res.status(400).json({ error: "addresses parameter is required" });
+  if (!chainId || !orderHash) {
+    return res
+      .status(400)
+      .json({ error: "chainId and orderHash are required" });
   }
 
   if (!ONEINCH_KEY) {
@@ -24,7 +26,7 @@ export default async function handler(
 
   try {
     const response = await fetch(
-      `${ONEINCH_BASE_URL}/portfolio/portfolio/v4/overview/erc20/details?addresses=${addresses}`,
+      `${ONEINCH_BASE_URL}/orderbook/v4.0/${chainId}/${orderHash}`,
       {
         method: "GET",
         headers: {
@@ -35,13 +37,13 @@ export default async function handler(
     );
 
     if (!response.ok) {
-      throw new Error(`1inch API error: ${response.status}`);
+      throw new Error(`1inch Orderbook API error: ${response.status}`);
     }
 
     const data = await response.json();
     res.status(200).json(data);
   } catch (error) {
-    console.error("Portfolio detailed API error:", error);
-    res.status(500).json({ error: "Failed to fetch detailed portfolio" });
+    console.error("Get order status API error:", error);
+    res.status(500).json({ error: "Failed to fetch order status" });
   }
 }

@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
 
-const ONEINCH_API_KEY = process.env.ONEINCH_KEY;
+const ONEINCH_KEY = process.env.ONEINCH_KEY;
 const ONEINCH_BASE_URL = "https://api.1inch.dev";
 
 export default async function handler(
@@ -17,7 +17,7 @@ export default async function handler(
     return res.status(400).json({ error: "addresses parameter is required" });
   }
 
-  if (!ONEINCH_API_KEY) {
+  if (!ONEINCH_KEY) {
     return res.status(500).json({ error: "1inch API key not configured" });
   }
 
@@ -27,7 +27,7 @@ export default async function handler(
       {
         method: "GET",
         headers: {
-          Authorization: `Bearer ${ONEINCH_API_KEY}`,
+          Authorization: `Bearer ${ONEINCH_KEY}`,
           "Content-Type": "application/json",
         },
       }

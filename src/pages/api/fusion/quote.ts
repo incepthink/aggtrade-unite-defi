@@ -49,7 +49,7 @@ export default async function handler(
     const response = await fetch(url, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${process.env.ONEINCH_API_KEY}`,
+        Authorization: `Bearer ${process.env.ONEINCH_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(payload),

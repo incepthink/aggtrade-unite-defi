@@ -60,7 +60,7 @@ async function fetchDetailedBalances(address: string) {
 }
 
 // Fetch current token prices from proxy
-async function fetchTokenPrices(
+export async function fetchTokenPrices(
   tokenAddresses: string[]
 ): Promise<TokenPriceMap> {
   try {
